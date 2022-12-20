@@ -21,6 +21,7 @@ import Meals from "./pages/admin/meal/Meals";
 import Users from "./pages/admin/users/Users";
 import HistoryOrders from "./pages/admin/history/HistoryOrders";
 import ManagePlans from "./pages/admin/plans/ManagePlans";
+import MealForm from "./pages/admin/meal/MealForm";
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
           <Route path="/admin/table" element={<Table />} />
           <Route path="/admin/ingredients" element={<Ingredients />} />
           <Route path="/admin/meals" element={<Meals />} />
+          <Route path="/admin/meals/add" element={<MealForm />} />
           <Route path="/admin/users" element={<Users />} />
           <Route path="/admin/history-order" element={<HistoryOrders />} />
           <Route path="/admin/plans" element={<ManagePlans />} />

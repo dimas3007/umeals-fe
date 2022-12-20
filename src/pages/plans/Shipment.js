@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BsCheck2, BsPlus, BsArrowRight } from "react-icons/bs";
+import { BsCheck2, BsPlus } from "react-icons/bs";
 import { ButtonIcon, Input, Button } from "../../components/ui";
 
 const Shipment = () => {

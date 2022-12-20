@@ -6,6 +6,7 @@ import {
   Avatar,
   Modal,
   Select,
+  FileInput,
 } from "flowbite-react";
 import { BsGearFill, BsFillPencilFill } from "react-icons/bs";
 import React, { useState } from "react";
@@ -27,6 +28,33 @@ const Users = () => {
     setIsAddress(true);
     setModalOpen(true);
   };
+
+  const [address, setAddress] = useState([
+    {
+      id: 1,
+      firstName: "Dimas",
+      lastName: "Setiaji",
+      streetAddress: "jalan rancabolang no 29 bandung",
+      apt: "Ceecills",
+      city: "New York",
+      zip: "402665",
+      state: "Arizona",
+      phone: "08965652223",
+      isSelected: true,
+    },
+    {
+      id: 2,
+      firstName: "Dimas",
+      lastName: "Setiaji 2",
+      streetAddress: "jalan rancabolang no 29 bandung",
+      apt: "Ceecills",
+      city: "New York",
+      zip: "402665",
+      state: "Arizona",
+      phone: "08965652223",
+      isSelected: false,
+    },
+  ]);
 
   return (
     <div className="font-main pb-28">
@@ -119,7 +147,7 @@ const Users = () => {
                 <div className="mb-1 block">
                   <Label htmlFor="foto" value="Foto" />
                 </div>
-                <TextInput id="foto" type="file" required={true} />
+                <FileInput id="foto" />
               </div>
               <div className="w-full flex">
                 <Button color="success" className="w-full">
@@ -129,7 +157,29 @@ const Users = () => {
               </div>
             </div>
           ) : (
-            <div>saya address</div>
+            <>
+              <h1 className="font-semibold mb-6">User Address</h1>
+              <div className="flex flex-col gap-4">
+                {address.map((item, i) => (
+                  <div
+                    className={`flex gap-4 p-4 rounded-lg border border-2 cursor-pointer drop-shadow-xl hover:border-lime-500`}
+                    key={i}
+                  >
+                    <div>
+                      <h2>
+                        {item.firstName} {item.lastName}
+                      </h2>
+                      <p>
+                        {item.streetAddress} apt {item.apt}
+                      </p>
+                      <p>
+                        {item.city}, {item.state} {item.zip}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </Modal.Body>
       </Modal>

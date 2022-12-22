@@ -11,6 +11,7 @@ import Landing from "./pages/Landing";
 import ListMeals from "./pages/ListMeals";
 import DetailMeal from "./pages/DetailMeal";
 import ProtectedRoute from "./utils/ProtectedRoute";
+import Cart from "./pages/Cart";
 
 // Admin Pages
 import Dashboard from "./pages/admin/Dashboard";
@@ -33,8 +34,9 @@ function App() {
           <Route path="/register" element={<Auth type="register" />} />
           <Route path="/plans" element={<Plans />} />
           <Route path="/meals" element={<ListMeals />} />
+          <Route path="/cart" element={<Cart />} />
 
-          <Route element={<ProtectedRoute isAuthenticated={true} />}>
+          <Route element={<ProtectedRoute />}>
             <Route path="/meals/:id" element={<DetailMeal />} />
           </Route>
         </Route>

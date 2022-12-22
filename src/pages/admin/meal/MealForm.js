@@ -1,15 +1,24 @@
 import {
+  Avatar,
+  Button,
   FileInput,
   Label,
   Select,
+  Table,
   Tabs,
   Textarea,
   TextInput,
 } from "flowbite-react";
 import React, { useEffect, useState } from "react";
 import { GiHotMeal } from "react-icons/gi";
-import { IoIosNutrition, IoIosList, IoMdRestaurant } from "react-icons/io";
-import { AiOutlinePlus, AiOutlineMinus } from "react-icons/ai";
+import {
+  IoIosNutrition,
+  IoIosList,
+  IoMdRestaurant,
+  IoIosAddCircle,
+  IoIosBook,
+} from "react-icons/io";
+import Tags from "../../../components/tags/Tags";
 import apiClient from "../../../utils/apiClient";
 
 const MealForm = () => {
@@ -22,7 +31,7 @@ const MealForm = () => {
     tags: "",
     allergens: "",
     allergens_description: "",
-    difficulity: "",
+    difficulty: "easy",
     price: 0,
     nutrition_value_id: 0,
     foto: "",
@@ -40,20 +49,17 @@ const MealForm = () => {
     colesterol: "",
   });
 
-  const [utensil, setUtensil] = useState([
-    // {
-    //   utensil: "",
-    //   meal_id: 0,
-    // }
-  ]);
+  const [utensil, setUtensil] = useState([]);
 
-  const [mealIngredients, setMealIngredients] = useState([
-    // {
-    //   meal_id: 0,
-    //   ingredient_id: 0,
-    //   quantity: 0,
-    // }
-  ]);
+  const [mealIngredients, setMealIngredients] = useState([]);
+  const [ingredientData, setIngredientData] = useState([]);
+
+  const [instructions, setInstructions] = useState([]);
+  const [instruction, setInstruction] = useState({
+    instruction: "",
+    meal_id: 0,
+    foto: "",
+  });
 
   const [ingredients, setIngredients] = useState([]);
 
@@ -75,11 +81,23 @@ const MealForm = () => {
       }
     }
     setMealIngredients([...mealIngredients, ingredient]);
+    setIngredientData([
+      ...ingredientData,
+      {
+        meal_id: 0,
+        ingredient_id: ingredient.id,
+        quantity: 0,
+      },
+    ]);
   };
 
   const handleRemoveMealIngredient = (id) => {
     const newMealIngredients = mealIngredients.filter((item) => item.id !== id);
+    const newIngredient = ingredientData.filter(
+      (item) => item.ingredient_id !== id
+    );
     setMealIngredients(newMealIngredients);
+    setIngredientData(newIngredient);
   };
 
   const handleQtyChange = (e, id, price) => {
@@ -93,13 +111,136 @@ const MealForm = () => {
     document.getElementById(
       `priceIngredient${id}`
     ).textContent = `$${priceIngredient}`;
+
+    ingredientData.map((item) => {
+      if (item.ingredient_id === id) {
+        item.quantity = +qty;
+      }
+
+      return item;
+    });
   };
 
-  const handleCheck = () => {
-    // console.log(meal);
-    console.log(nutritionValue);
-    // console.log(utensil);
-    // console.log(mealIngredients);
+  // Utensils Function
+  const handleAddUtensil = (e) => {
+    if (e.key === "Enter") {
+      if (e.target.value === "") return;
+      setUtensil([...utensil, { utensil: e.target.value, meal_id: 0 }]);
+      e.target.value = "";
+    }
+  };
+
+  const handleDeleteUtensil = (tag) => {
+    const newUtensil = utensil.filter((item) => item.utensil !== tag);
+    setUtensil(newUtensil);
+  };
+
+  // Instructions Function
+  const handleAddInstruction = () => {
+    setInstructions([...instructions, instruction]);
+    setInstruction({ instruction: "", meal_id: 0, foto: "" });
+  };
+
+  const handleRemoveInstruction = (index) => {
+    const newInstructions = instructions.filter((item, i) => i !== index);
+    setInstructions(newInstructions);
+  };
+
+  const handleTest = () => {
+    const newIngredientData = ingredientData.map((item) => {
+      return { ...item, meal_id: 4 };
+    });
+    console.log("new ingredient data : ", newIngredientData);
+    setIngredientData(newIngredientData);
+    console.log(ingredientData);
+  };
+
+  // Save Data Process Function
+  const handleSaveMeal = () => {
+    apiClient.post("/nutrition", nutritionValue).then((response) => {
+      const formData = new FormData();
+      formData.append("name", meal.name);
+      formData.append("with", meal.with);
+      formData.append("total_time", meal.total_time);
+      formData.append("prep_time", meal.prep_time);
+      formData.append("description", meal.description);
+      formData.append("tags", meal.tags);
+      formData.append("allergens", meal.allergens);
+      formData.append("allergens_description", meal.allergens_description);
+      formData.append("difficulty", meal.difficulty);
+      formData.append("price", meal.price);
+      formData.append("foto", meal.foto);
+      formData.append("nutrition_value_id", response.data.data.id);
+      apiClient
+        .post("meal", formData, {
+          headers: {
+            "content-type": "multipart/form-data",
+          },
+        })
+        .then((response) => {
+          console.log(response);
+          console.log(response.data.success);
+          console.log(response.data.data.id);
+
+          if (response.data.success) {
+            const newIngredientData = ingredientData.map((item) => {
+              return { ...item, meal_id: response.data.data.id };
+            });
+
+            newIngredientData.map((item) => {
+              return apiClient
+                .post("/meal-ingredient", item)
+                .then((response) => {
+                  console.log(response);
+                })
+                .catch((error) => {
+                  console.log(error);
+                });
+            });
+
+            const newUtensil = utensil.map((item) => {
+              return { ...item, meal_id: response.data.data.id };
+            });
+
+            newUtensil.map((item) => {
+              return apiClient
+                .post("/utensil", item)
+                .then((response) => {
+                  console.log(response);
+                })
+                .catch((error) => {
+                  console.log(error);
+                });
+            });
+
+            const newInstructions = instructions.map((item) => {
+              return { ...item, meal_id: response.data.data.id };
+            });
+
+            newInstructions.map((item) => {
+              const formData = new FormData();
+              formData.append("instruction", item.instruction);
+              formData.append("meal_id", item.meal_id);
+              formData.append("foto", item.foto);
+              return apiClient
+                .post("/instruction", formData, {
+                  headers: {
+                    "content-type": "multipart/form-data",
+                  },
+                })
+                .then((response) => {
+                  console.log(response);
+                })
+                .catch((error) => {
+                  console.log(error);
+                });
+            });
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+        });
+    });
   };
 
   return (
@@ -176,7 +317,7 @@ const MealForm = () => {
                   id="difficulity"
                   required={true}
                   onChange={(e) =>
-                    setMeal({ ...meal, difficulity: e.target.value })
+                    setMeal({ ...meal, difficulty: e.target.value })
                   }
                 >
                   <option>easy</option>
@@ -282,6 +423,7 @@ const MealForm = () => {
 
         {/* Ingredients */}
         <Tabs.Item title="Ingredients" icon={IoIosList}>
+          <Button onClick={handleTest}>Test</Button>
           <div className="flex gap-4 w-full mb-12">
             <div className="flex-1">
               <div className="mb-2 block">
@@ -357,7 +499,6 @@ const MealForm = () => {
 
         {/* Nutrition Value */}
         <Tabs.Item active={true} title="Nutrition Value" icon={IoIosNutrition}>
-          <button onClick={handleCheck}>Cek</button>
           <form className="flex flex-col gap-4">
             <div className="flex gap-4 items-center w-full">
               <div className="flex-1">
@@ -532,18 +673,95 @@ const MealForm = () => {
           </form>
         </Tabs.Item>
 
+        {/* Instruction */}
+        <Tabs.Item title="Instruction" icon={IoIosBook}>
+          <div className="flex flex-col gap-4">
+            <div>
+              <div className="mb-2 block">
+                <Label htmlFor="foto" value="Foto" />
+              </div>
+              <FileInput
+                id="foto"
+                onChange={(e) =>
+                  setInstruction({ ...instruction, foto: e.target.files[0] })
+                }
+              />
+            </div>
+            <div id="textarea">
+              <div className="mb-2 block">
+                <Label htmlFor="description" value="Description" />
+              </div>
+              <Textarea
+                id="description"
+                placeholder="description for a meal..."
+                required={true}
+                rows={4}
+                value={instruction.instruction}
+                onChange={(e) =>
+                  setInstruction({
+                    ...instruction,
+                    instruction: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <Button onClick={handleAddInstruction}>Add instruction</Button>
+
+            <Table striped={true} className="mt-8">
+              <Table.Head>
+                <Table.HeadCell>No</Table.HeadCell>
+                <Table.HeadCell>Foto</Table.HeadCell>
+                <Table.HeadCell>Instruction</Table.HeadCell>
+                <Table.HeadCell>Action</Table.HeadCell>
+              </Table.Head>
+              <Table.Body className="divide-y">
+                {instructions.map((instruction, index) => (
+                  <Table.Row
+                    key={index}
+                    className="bg-white dark:border-gray-700 dark:bg-gray-800"
+                  >
+                    <Table.Cell>{index + 1}</Table.Cell>
+                    <Table.Cell>
+                      <Avatar img={URL.createObjectURL(instruction.foto)} />
+                    </Table.Cell>
+                    <Table.Cell className="whitespace-nowrap font-medium text-gray-900 dark:text-white">
+                      {instruction.instruction}
+                    </Table.Cell>
+                    <Table.Cell>
+                      <span
+                        className="text-red-600 font-semibold cursor-pointer"
+                        onClick={() => {
+                          handleRemoveInstruction(index);
+                        }}
+                      >
+                        Remove
+                      </span>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+          </div>
+        </Tabs.Item>
+
         {/* Utensils */}
         <Tabs.Item title="Utensils" icon={IoMdRestaurant}>
-          <div className="flex-1">
-            <div className="mb-2 block">
-              <Label htmlFor="utensils" value="Utensils" />
-            </div>
-            <TextInput
-              id="utensil"
-              type="text"
-              placeholder="ex. Pancita, Sarten, etc."
-              required={true}
-            />
+          <Tags
+            label="utensils"
+            handleAddUtensil={handleAddUtensil}
+            handleDeleteUtensil={handleDeleteUtensil}
+            utensil={utensil}
+          />
+
+          <div className="mt-16">
+            <p className="text-gray-500 w-1/2 text-sm py-2">
+              Before you start the process of saving data, ensure that all of
+              the fields have been filled out accurately!.
+            </p>
+            <Button color="success" className="w-full" onClick={handleSaveMeal}>
+              <IoIosAddCircle className="mr-2" />
+              Save new data meal
+            </Button>
           </div>
         </Tabs.Item>
       </Tabs.Group>

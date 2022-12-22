@@ -1,12 +1,36 @@
-import { Table, Button, Label, TextInput, Avatar, Modal } from "flowbite-react";
+import { Table, Button, Label, TextInput, Avatar } from "flowbite-react";
 import { BsGearFill, BsFillPlusCircleFill } from "react-icons/bs";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import apiClient from "../../../utils/apiClient";
+import { baseUrl } from "../../../utils/env";
 
 const Meals = () => {
-  const [modalOpen, setModalOpen] = useState(false);
+  const [meals, setMeals] = useState([]);
 
-  const onClose = () => {
-    setModalOpen(false);
+  const getMealsApi = () => {
+    apiClient.get("/meal").then((response) => {
+      setMeals(response.data.data);
+    });
+  };
+  useEffect(() => {
+    apiClient.get("/csrf-cookie").then((response) => {
+      // console.log(response);
+    });
+
+    getMealsApi();
+  }, []);
+
+  const handleDeleteMeal = (id) => {
+    apiClient
+      .delete(`/meal/${id}`)
+      .then((response) => {
+        console.log(response);
+        getMealsApi();
+      })
+      .catch((error) => {
+        console.log(error);
+      });
   };
 
   return (
@@ -23,10 +47,12 @@ const Meals = () => {
             required={true}
           />
         </div>
-        <Button color="success" onClick={() => setModalOpen(true)}>
-          <BsFillPlusCircleFill className="mr-2" />
-          Add
-        </Button>
+        <Link to="/admin/meals/add">
+          <Button color="success">
+            <BsFillPlusCircleFill className="mr-2" />
+            Add
+          </Button>
+        </Link>
       </div>
       <Table striped={true}>
         <Table.Head>
@@ -41,96 +67,48 @@ const Meals = () => {
           </Table.HeadCell>
         </Table.Head>
         <Table.Body className="divide-y">
-          <Table.Row className="bg-white dark:border-gray-700 dark:bg-gray-800">
-            <Table.Cell>
-              <Avatar
-                img="https://flowbite.com/docs/images/people/profile-picture-5.jpg"
-                rounded={true}
-              />
-            </Table.Cell>
-            <Table.Cell className="whitespace-nowrap">
-              <h3 className="font-medium text-gray-900">
-                Black Bean & Pepper Quesadillas
-              </h3>
-              <p>with Salsa Fresca & Creamy Guacamole</p>
-            </Table.Cell>
-            <Table.Cell>$2999</Table.Cell>
-            <Table.Cell>Laptop</Table.Cell>
-            <Table.Cell>Laptop</Table.Cell>
-            <Table.Cell>Laptop</Table.Cell>
-            <Table.Cell className="flex items-center gap-1">
-              <a href="/tables">
+          {meals.map((meal) => (
+            <Table.Row
+              key={meal.id}
+              className="bg-white dark:border-gray-700 dark:bg-gray-800"
+            >
+              <Table.Cell>
+                <Avatar
+                  img={`${baseUrl}/storage/meal/${meal.foto}`}
+                  rounded={true}
+                />
+              </Table.Cell>
+              <Table.Cell className="whitespace-nowrap">
+                <h3 className="font-medium text-gray-900 capitalize">
+                  {meal.name}
+                </h3>
+                <p className="lowercase">{meal.with}</p>
+              </Table.Cell>
+              <Table.Cell>${meal.price}</Table.Cell>
+              <Table.Cell className="capitalize">{meal.tags}</Table.Cell>
+              <Table.Cell>
+                {meal.total_time} & {meal.prep_time}
+              </Table.Cell>
+              <Table.Cell className="capitalize">{meal.difficulty}</Table.Cell>
+              <Table.Cell className="flex items-center gap-1">
                 <Button size="xs" color="success">
                   Detail
                 </Button>
-              </a>
-              <a href="/tables">
                 <Button size="xs">Edit</Button>
-              </a>
-              <a href="/delete">
-                <Button size="xs" color="failure">
+                <Button
+                  size="xs"
+                  color="failure"
+                  onClick={() => {
+                    handleDeleteMeal(meal.id);
+                  }}
+                >
                   Delete
                 </Button>
-              </a>
-            </Table.Cell>
-          </Table.Row>
+              </Table.Cell>
+            </Table.Row>
+          ))}
         </Table.Body>
       </Table>
-
-      <Modal show={modalOpen} size="xl" popup={true} onClose={onClose}>
-        <Modal.Header />
-        <Modal.Body>
-          <div className="space-y-4 px-6 pb-4 sm:pb-6 lg:px-8 xl:pb-8">
-            <h3 className="text-xl font-medium text-gray-900 dark:text-white">
-              Add ingredient data
-            </h3>
-            <div>
-              <div className="mb-1 block">
-                <Label htmlFor="ingredient" value="Ingredient" />
-              </div>
-              <TextInput
-                id="ingredient"
-                placeholder="ex. Onion"
-                required={true}
-              />
-            </div>
-            <div>
-              <div className="mb-1 block">
-                <Label htmlFor="quantity" value="Quantity" />
-              </div>
-              <TextInput
-                id="quantity"
-                type="number"
-                placeholder="ex. 3"
-                required={true}
-              />
-            </div>
-            <div>
-              <div className="mb-1 block">
-                <Label htmlFor="contains" value="Contains" />
-              </div>
-              <TextInput
-                id="contains"
-                type="text"
-                placeholder="ex. Milk"
-                required={true}
-              />
-            </div>
-            <div>
-              <div className="mb-1 block">
-                <Label htmlFor="foto" value="Foto" />
-              </div>
-              <TextInput id="foto" type="file" required={true} />
-            </div>
-            <div className="w-full flex">
-              <Button color="success" className="w-full">
-                <BsFillPlusCircleFill className="mr-2" />
-                Add new ingredient
-              </Button>
-            </div>
-          </div>
-        </Modal.Body>
-      </Modal>
     </div>
   );
 };

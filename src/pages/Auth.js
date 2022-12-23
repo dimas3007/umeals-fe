@@ -53,10 +53,10 @@ const Auth = ({ type = "login" }) => {
       <div className="grid grid-cols-12 bg-transparent rounded-xl">
         <div className="col-span-7 py-8 px-24 flex flex-col justify-between">
           <Brand />
-          <div className="text-6xl font-semibold flex flex-col gap-3">
-            <h1>Learn to code.</h1>
-            <h1>Interactively.</h1>
-            <h1>For free.</h1>
+          <div className="text-6xl font-bold flex flex-col gap-3">
+            <h1>BEST.</h1>
+            <h1>MEALS.</h1>
+            <h1>PLATFORMS.</h1>
           </div>
           <div>
             <ButtonIcon text="Watch demo" icon={<BsFillPlayCircleFill />} />
@@ -66,13 +66,12 @@ const Auth = ({ type = "login" }) => {
         {/* <div className="col-span-5 py-8 px-16 bg-gradient-radial from-red-700 to-red-800 flex flex-col gap-3 rounded-xl"> */}
         <div className="col-span-5 py-8 px-16 bg-gradient-radial from-lime-500 to-lime-600 flex flex-col gap-3 rounded-xl">
           <div>
-            <p className="font-semibold">Join over 25 million</p>
-            <p className="font-semibold">learners from around the globe</p>
+            <p className="font-semibold">Login</p>
+            <p className="font-semibold">Login and search your favorite meal</p>
           </div>
           <p className="text-xs text-slate-100 mb-6">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit.
-            Voluptatibus assumenda, obcaecati ipsam repellendus, perferendis
-            delectus tempora et ut a, id molestiae inventore?
+            one more step so you can access all the features and of course you
+            can buy the food you like, come on login now
           </p>
           <form action="" className="flex flex-col gap-3 mb-2">
             {type === "register" ? (

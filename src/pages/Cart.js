@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BsTrash } from "react-icons/bs";
 import { ButtonIcon, Input, Button } from "../components/ui";
 import { BsCheck2, BsPlus } from "react-icons/bs";
+import { useSelector } from "react-redux";
 import { baseUrl } from "../utils/env";
 import apiClient from "../utils/apiClient";
 import { AiOutlinePlus, AiOutlineMinus } from "react-icons/ai";
@@ -10,8 +11,13 @@ const Cart = () => {
   const [cart, setCart] = useState([]);
   const [address, setAddress] = useState([]);
   const [subtotal, setSubtotal] = useState(0);
+  const [isAddress, setIsAddress] = useState(false);
+  const [selectedAddress, setSelectedAddress] = useState(0);
+
+  const user = useSelector((state) => state.user.user);
 
   const [addressData, setAddressData] = useState({
+    name: user.name,
     street_address: "",
     apt_suite_floor: "",
     city: "",
@@ -42,6 +48,7 @@ const Cart = () => {
   useEffect(() => {
     getApiCart();
     getApiAddress();
+    setIsAddress(false);
   }, []);
 
   const handleAmountChange = (id, amount, type) => {
@@ -80,14 +87,62 @@ const Cart = () => {
         return { ...address, isSelected: false };
       })
     );
+
+    setSelectedAddress(id);
   };
 
   const handleSaveAddress = (e) => {
     e.preventDefault();
     apiClient.post("/address", addressData).then((response) => {
-      console.log(response.data.data);
       getApiAddress();
       setIsAddNewAddress(false);
+    });
+  };
+
+  const handleBuy = () => {
+    setIsAddress(true);
+  };
+
+  const handleCheckout = () => {
+    let date = new Date();
+    date.setDate(date.getDate() + 1);
+
+    let day = date.getDate();
+    let month = date.getMonth() + 1;
+    let year = date.getFullYear();
+
+    date = `${year}-${month}-${day}`;
+
+    const dataOrder = {
+      order: [],
+    };
+
+    const data = {
+      user_id: user.id,
+      meal_id: 0,
+      amount: 0,
+      payment_method: "card payment",
+      total_price: subtotal,
+      total_price_product: 0,
+      special_instruction: "no instruction",
+      delivery_date: date,
+      discount: 0,
+      tax: 0,
+      shipping: 0,
+      address_id: selectedAddress,
+      uuid: Date.now(),
+    };
+
+    cart.forEach((item) => {
+      data.meal_id = item.meal.id;
+      data.amount = item.amount;
+      data.total_price_product = item.meal.price * item.amount;
+
+      dataOrder.order.push(data);
+    });
+
+    apiClient.post("/order/checkout", dataOrder).then((response) => {
+      window.location = response.data.url;
     });
   };
 
@@ -95,56 +150,61 @@ const Cart = () => {
     <div className="min-h-screen font-main bg-gradient-radial from-slate-800 to-slate-900 text-slate-100 p-10 flex relative overflow-hidden">
       <div className="grid grid-cols-12 w-full">
         <div className="col-span-8 flex flex-col p-6 space-y-4 w-full">
-          <h2 className="text-xl font-semibold">Check out</h2>
-          <div>
-            <h2>Delivery address</h2>
-            <div className="flex flex-col gap-4 my-4">
-              {address.map((item, i) => {
-                if (address != 0) {
-                  return (
-                    <div
-                      className={`flex gap-4 p-4 rounded-lg border border-2 cursor-pointer drop-shadow-xl hover:border-lime-500 ${
-                        item.isSelected ? "border-lime-500" : "border-slate-600"
-                      }`}
-                      key={i}
-                      onClick={() => toggleSelectAddress(item.id)}
-                    >
-                      <div>
-                        <div
-                          className={`p-1 rounded-full border border-1 border-slate-600 w-fit ${
-                            item.isSelected && "bg-lime-500"
-                          }`}
-                        >
-                          <BsCheck2 />
+          <h2 className="text-xl font-semibold">
+            {isAddress ? "Check Out" : "Cart"}
+          </h2>
+          {isAddress && (
+            <div>
+              <h2>Delivery address</h2>
+              <p className="text-sm text-gray-500">
+                Choose one of your own address
+              </p>
+              <div className="flex flex-col gap-4 my-4">
+                {address.map((item, i) => {
+                  if (address != 0) {
+                    return (
+                      <div
+                        className={`flex gap-4 p-4 rounded-lg border border-2 cursor-pointer drop-shadow-xl hover:border-lime-500 ${
+                          item.isSelected
+                            ? "border-lime-500"
+                            : "border-slate-600"
+                        }`}
+                        key={i}
+                        onClick={() => toggleSelectAddress(item.id)}
+                      >
+                        <div>
+                          <div
+                            className={`p-1 rounded-full border border-1 border-slate-600 w-fit ${
+                              item.isSelected && "bg-lime-500"
+                            }`}
+                          >
+                            <BsCheck2 />
+                          </div>
+                        </div>
+                        <div>
+                          <h2 className="capitalize">{item.name}</h2>
+                          <p>
+                            {item.street_address} apt {item.apt_suite_floor}
+                          </p>
+                          <p>
+                            {item.city}, {item.state} {item.zip_code}
+                          </p>
                         </div>
                       </div>
-                      <div>
-                        <h2>
-                          {item.firstName} {item.lastName}
-                        </h2>
-                        <p>
-                          {item.streetAddress} apt {item.apt}
-                        </p>
-                        <p>
-                          {item.city}, {item.state} {item.zip}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                }
-              })}
-              {!isAddNewAddress && address.length != 0 && (
-                <div>
-                  <ButtonIcon
-                    text="Add new address"
-                    icon={<BsPlus />}
-                    theme="border-bottom"
-                    onClick={() => setIsAddNewAddress(true)}
-                  />
-                </div>
-              )}
-              {isAddNewAddress ||
-                (address.length === 0 && (
+                    );
+                  }
+                })}
+                {!isAddNewAddress && address.length != 0 && (
+                  <div>
+                    <ButtonIcon
+                      text="Add new address"
+                      icon={<BsPlus />}
+                      theme="border-bottom"
+                      onClick={() => setIsAddNewAddress(true)}
+                    />
+                  </div>
+                )}
+                {isAddNewAddress && (
                   <form action="" className="flex flex-col gap-6">
                     <div className="flex gap-6">
                       <Input
@@ -218,10 +278,11 @@ const Cart = () => {
                       onClick={(e) => handleSaveAddress(e)}
                     />
                   </form>
-                ))}
+                )}
+              </div>
             </div>
-          </div>
-          {/* <ul className="flex flex-col divide-y divide-gray-700">
+          )}
+          <ul className="flex flex-col divide-y divide-gray-700">
             {cart.map((item) => (
               <li
                 key={item.id}
@@ -288,10 +349,11 @@ const Cart = () => {
                 </div>
               </li>
             ))}
-          </ul> */}
+          </ul>
         </div>
         <div className="col-span-4 p-6 space-y-4 w-full flex flex-col">
           <div className="bg-gradient-radial from-lime-500 to-lime-600 rounded-lg flex flex-col gap-1 p-4 my-4">
+            <h1 className="font-semibold mb-4">Shopping Summary</h1>
             <div className="flex flex-col gap-2">
               <div className="flex justify-between">
                 <p className="font-medium text-sm">Subtotal </p>
@@ -301,11 +363,13 @@ const Cart = () => {
                 <p className="font-medium text-sm">Tax </p>
                 <p className="text-rg">$0</p>
               </div>
+              {isAddress && (
+                <div className="flex justify-between">
+                  <p className="font-medium text-sm">Shipping </p>
+                  <p className="text-rg">$0</p>
+                </div>
+              )}
               {/* <div className="flex justify-between">
-                <p className="font-medium text-sm">Shipping </p>
-                <p className="text-rg">$46</p>
-              </div>
-              <div className="flex justify-between">
                 <p className="font-medium text-sm">Discount </p>
                 <p className="text-rg">$0</p>
               </div> */}
@@ -323,7 +387,16 @@ const Cart = () => {
               </div>
             </div>
             <div className="mt-2">
-              <Button text="Checkout" />
+              {isAddress ? (
+                <>
+                  <Button
+                    text={`Check out (${cart.length})`}
+                    onClick={handleCheckout}
+                  />
+                </>
+              ) : (
+                <Button text={`Buy (${cart.length})`} onClick={handleBuy} />
+              )}
             </div>
           </div>
         </div>
